@@ -1,56 +1,84 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "../../lib/firebase";
-import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { app } from "../../firebase";
 
 export default function Admin() {
-  const [pass, setPass] = useState("");
+  const [password, setPassword] = useState("");
   const [access, setAccess] = useState(false);
-  const [payments, setPayments] = useState([]);
+  const [data, setData] = useState([]);
 
-  const check = () => {
-    if (pass === "Gurnek191108") {
+  const correctPassword = "Gurnek191108"; // your password
+
+  const handleLogin = () => {
+    if (password === correctPassword) {
       setAccess(true);
+      fetchData();
     } else {
-      alert("Wrong password");
+      alert("Wrong Password ❌");
     }
   };
 
-  useEffect(() => {
-    if (!access) return;
+  const fetchData = async () => {
+    const db = getFirestore(app);
+    const snapshot = await getDocs(collection(db, "editors"));
 
-    const unsub = onSnapshot(collection(db, "payments"), (snap) => {
-      setPayments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => unsub();
-  }, [access]);
-
-  const approve = async (id) => {
-    await updateDoc(doc(db, "payments", id), {
-      status: "approved",
-    });
+    setData(snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })));
   };
 
+  const handleDelete = async (id) => {
+    const db = getFirestore(app);
+    await deleteDoc(doc(db, "editors", id));
+    fetchData();
+  };
+
+  // 🔒 If not logged in
   if (!access) {
     return (
-      <div style={{ padding: 20 }}>
-        <h1>Admin Access</h1>
-        <input onChange={(e) => setPass(e.target.value)} />
-        <button onClick={check}>Enter</button>
+      <div style={{
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+        background: "#0f0f0f",
+        color: "white"
+      }}>
+        <h2>Admin Login</h2>
+
+        <input
+          type="password"
+          placeholder="Enter Password"
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ padding: "10px", margin: "10px" }}
+        />
+
+        <button onClick={handleLogin}>
+          Enter
+        </button>
       </div>
     );
   }
 
+  // ✅ Admin Panel
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Admin Dashboard</h1>
+    <div style={{ padding: "30px", background: "#0f0f0f", color: "white" }}>
+      <h1>Admin Panel</h1>
 
-      {payments.map((p) => (
-        <div key={p.id}>
-          <p>{p.txnId} - {p.status}</p>
-          <button onClick={() => approve(p.id)}>Approve</button>
+      {data.map((item) => (
+        <div key={item.id} style={{
+          margin: "10px 0",
+          padding: "10px",
+          border: "1px solid #333"
+        }}>
+          <h3>{item.name}</h3>
+          <button onClick={() => handleDelete(item.id)}>
+            Delete
+          </button>
         </div>
       ))}
     </div>
