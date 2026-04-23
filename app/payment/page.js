@@ -1,5 +1,5 @@
 "use client";
-
+import { app } from "@/firebase";
 import { useState } from "react";
 import { db } from "../../lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
