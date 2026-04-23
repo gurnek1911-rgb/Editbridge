@@ -1,5 +1,5 @@
 "use client";
-import { app } from "@/firebase";
+
 export default function Home() {
   return (
     <div style={{
