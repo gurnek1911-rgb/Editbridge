@@ -1,41 +1,60 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "../../lib/firebase";
-import { collection, addDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+import { app } from "../../firebase";
 
 export default function Chat() {
+  const [msg, setMsg] = useState("");
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
 
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, "messages"), (snapshot) => {
-      setMessages(snapshot.docs.map(doc => doc.data()));
-    });
-    return () => unsub();
-  }, []);
+  const db = getFirestore(app);
 
   const sendMessage = async () => {
-    if (!text) return;
+    if (!msg) return;
 
     await addDoc(collection(db, "messages"), {
-      text,
-      createdAt: serverTimestamp(),
+      text: msg,
+      time: Date.now()
     });
 
-    setText("");
+    setMsg("");
+    loadMessages();
   };
 
+  const loadMessages = async () => {
+    const snapshot = await getDocs(collection(db, "messages"));
+    setMessages(snapshot.docs.map(doc => doc.data()));
+  };
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Chat</h1>
+    <div style={{
+      background: "#0f0f0f",
+      color: "white",
+      minHeight: "100vh",
+      padding: "20px"
+    }}>
+      
+      <h2>Chat</h2>
 
-      {messages.map((m, i) => (
-        <p key={i}>{m.text}</p>
-      ))}
+      <div>
+        {messages.map((m, i) => (
+          <p key={i}>{m.text}</p>
+        ))}
+      </div>
 
-      <input value={text} onChange={(e) => setText(e.target.value)} />
+      <input
+        value={msg}
+        onChange={(e) => setMsg(e.target.value)}
+        placeholder="Type message..."
+      />
+
       <button onClick={sendMessage}>Send</button>
+
     </div>
   );
 }
