@@ -1,7 +1,5 @@
 "use client";
 
-import Navbar from "../components/Navbar";
-
 export default function Home() {
   return (
     <div style={{
@@ -9,8 +7,6 @@ export default function Home() {
       color: "white",
       minHeight: "100vh"
     }}>
-      
-      <Navbar />
 
       <div style={{
         display: "flex",
